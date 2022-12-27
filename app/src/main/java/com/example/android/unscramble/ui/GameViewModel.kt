@@ -1,11 +1,16 @@
 package com.example.android.unscramble.ui
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.android.unscramble.data.SCORE_INCREASE
 import com.example.android.unscramble.data.allWords
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class GameViewModel : ViewModel() {
 
@@ -25,6 +30,9 @@ class GameViewModel : ViewModel() {
 
     // A backing property lets you return something from a getter other than the exact object.
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    var userGuess by mutableStateOf("")
+        private set
 
     init {
         resetGame()
@@ -48,6 +56,41 @@ class GameViewModel : ViewModel() {
             tempWord.shuffle()
         }
         return String(tempWord)
+    }
+
+    fun checkUserGuess() {
+        if (userGuess.equals(currentWord, ignoreCase = true)) {
+            // User's guess is correct, increase the score
+            // and call updateGameState() to prepare the game for next round
+            val updatedScore = _uiState.value.score.plus(SCORE_INCREASE)
+            updateGameState(updatedScore)
+        } else {
+            // User's guess is wrong, show an error
+            _uiState.update { currentState ->
+                currentState.copy(isGuessedWordWrong = true)
+            }
+        }
+        updateUserGuess("") // Reset user guess
+    }
+
+    private fun updateGameState(updatedScore: Int) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                isGuessedWordWrong = false,
+                currentWordCount = currentState.currentWordCount.inc(),
+                currentScrambledWord = pickRandomWordAndShuffle(),
+                score = updatedScore
+            )
+        }
+    }
+
+    fun updateUserGuess(guessedWord: String) {
+        userGuess = guessedWord
+    }
+
+    fun skipWord() {
+        updateGameState(_uiState.value.score)
+        updateUserGuess("") // Reset user guess
     }
 
     fun resetGame() {
