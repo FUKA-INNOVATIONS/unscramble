@@ -110,7 +110,6 @@ class GameViewModel : ViewModel() {
     fun resetGame() {
         usedWords.clear()
         _uiState.value = GameUiState(currentScrambledWord = pickRandomWordAndShuffle())
-        //Log.d("Fuka scumbled: ", "Used words size: ${usedWords.size} - _uiState value: ${_uiState.value}")
     }
 
 }
